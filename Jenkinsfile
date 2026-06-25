@@ -2,40 +2,40 @@ pipeline {
 agent any
 
 
+environment {
+    IMAGE_NAME = "anushcez/gov-hospital"
+}
+
 stages {
 
-    stage('Clone') {
+    stage('Build Image') {
         steps {
-            echo 'Repository Cloned'
+            sh 'docker build -t $IMAGE_NAME:v5 .'
         }
     }
 
-    stage('Build Docker Image') {
+    stage('Docker Login') {
         steps {
-            sh 'docker build -t gov-hospital:v1 .'
+            withCredentials([usernamePassword(
+                credentialsId: 'dockerhub-creds',
+                usernameVariable: 'DOCKER_USER',
+                passwordVariable: 'DOCKER_PASS'
+            )]) {
+
+                sh '''
+                echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+                '''
+            }
         }
     }
 
-    stage('Tag Image') {
+    stage('Push Image') {
         steps {
-            sh 'docker tag gov-hospital:v1 anushcez/gov-hospital:v4'
-        }
-    }
-
-    stage('Push To Docker Hub') {
-        steps {
-            sh 'docker push anushcez/gov-hospital:v4'
-        }
-    }
-
-    stage('Run Container') {
-        steps {
-            sh 'docker stop gov-hospital-container || true'
-            sh 'docker rm gov-hospital-container || true'
-            sh 'docker run -d -p 80:80 --name gov-hospital-container gov-hospital:v1'
+            sh 'docker push $IMAGE_NAME:v5'
         }
     }
 }
 
 
 }
+
