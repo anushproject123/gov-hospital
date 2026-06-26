@@ -33,10 +33,11 @@ pipeline {
             }
         }
 
-        stage('Deploy to Kubernetes') {
+        stage('Deploy Kubernetes') {
             steps {
                 sh '''
                 kubectl set image deployment/gov-hospital gov-hospital=$IMAGE_NAME:latest
+                kubectl rollout restart deployment/gov-hospital
                 kubectl rollout status deployment/gov-hospital
                 '''
             }
